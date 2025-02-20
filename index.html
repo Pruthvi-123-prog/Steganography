@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Steganography Webpage</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        .title {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            position: relative;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .typing-text {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            height: 30px;
+            position: relative;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .cursor {
+            font-weight: bold;
+            animation: blink 0.7s infinite;
+        }
+
+        .upload-btn {
+            display: none;
+        }
+
+        .upload-label {
+            display: inline-block;
+            width: 200px;
+            height: 50px;
+            background-color: #000;
+            color: #fff;
+            font-size: 1.5rem;
+            line-height: 50px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: box-shadow 0.3s ease;
+            margin-bottom: 20px;
+            border: 2px solid lightgray;
+            box-shadow: 0 0 5px lightgray;
+        }
+
+        .upload-label:hover {
+            box-shadow: 0 0 10px lightgray;
+        }
+
+        .action-btn {
+            display: inline-block;
+            width: 200px;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border: none;
+            background-color: #000;
+            color: #fff;
+            font-size: 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: box-shadow 0.3s ease;
+            border: 2px solid lightgray;
+            box-shadow: 0 0 5px lightgray;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .action-btn.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            display: block;
+        }
+
+        .action-btn.visible {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .message-box {
+            width: 380px;
+            margin: 10px auto;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid lightgray;
+            box-shadow: 0 0 5px lightgray;
+            background-color: #000;
+            color: #fff;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">STEGANOGRAPHY</h1>
+        <p class="typing-text"><span class="typed-text"></span><span class="cursor">|</span></p>
+        <div class="button-container">
+            <input type="file" id="imageUploader" class="upload-btn">
+            <label for="imageUploader" class="upload-label">Upload</label>
+            <button id="encrypt-btn" class="action-btn hidden">Encrypt</button>
+            <button id="decrypt-btn" class="action-btn hidden">Decrypt</button>
+        </div>
+        <input type="text" id="message" class="hidden message-box" placeholder="Type text to embed into the image">
+        <button id="download-btn" class="hidden action-btn">Download</button>
+    </div>
+    <canvas id="canvas" class="hidden"></canvas>
+    <script>
+        const typingText = "Unleashing Secrets, Bit by Bit...";
+        const typedTextElement = document.querySelector(".typed-text");
+        const cursorElement = document.querySelector(".cursor");
+        let charIndex = 0;
+
+        function type() {
+            if (charIndex < typingText.length) {
+                typedTextElement.textContent += typingText.charAt(charIndex);
+                charIndex++;
+                setTimeout(type, 100);
+            } else {
+                setTimeout(backspace, 2000);
+            }
+        }
+
+        function backspace() {
+            if (charIndex > 0) {
+                typedTextElement.textContent = typingText.substring(0, charIndex - 1);
+                charIndex--;
+                setTimeout(backspace, 100);
+            } else {
+                setTimeout(type, 500);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(type, 1000);
+        });
+
+        const imageUploader = document.getElementById('imageUploader');
+        const encryptBtn = document.getElementById('encrypt-btn');
+        const decryptBtn = document.getElementById('decrypt-btn');
+        const messageInput = document.getElementById('message');
+        const downloadBtn = document.getElementById('download-btn');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let img = new Image();
+
+        imageUploader.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                img.onload = function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    encryptBtn.classList.remove('hidden');
+                    encryptBtn.classList.add('visible');
+                    decryptBtn.classList.remove('hidden');
+                    decryptBtn.classList.add('visible');
+                };
+            };
+            reader.readAsDataURL(file);
+        });
+
+        encryptBtn.addEventListener('click', function() {
+            messageInput.classList.remove('hidden');
+            messageInput.classList.add('visible');
+            downloadBtn.classList.remove('hidden');
+            downloadBtn.classList.add('visible');
+        });
+
+        function embedMessageInImage(imageData, message) {
+            const messageBits = messageToBits(message);
+            let messageIndex = 0;
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                if (messageIndex < messageBits.length) {
+                    imageData.data[i] = setLSB(imageData.data[i], messageBits[messageIndex]);
+                    messageIndex++;
+                }
+            }
+            return imageData;
+        }
+
+        function messageToBits(message) {
+            const bits = [];
+            for (let i = 0; i < message.length; i++) {
+                const charBits = message.charCodeAt(i).toString(2).padStart(8, '0');
+                for (let j = 0; j < charBits.length; j++) {
+                    bits.push(parseInt(charBits[j]));
+                }
+            }
+            return bits;
+        }
+
+        function setLSB(value, bit) {
+            return (value & 0xFE) | bit;
+        }
+
+        function extractMessageFromImage(imageData, messageLength) {
+            const messageBits = [];
+            for (let i = 0; i < imageData.data.length && messageBits.length < messageLength * 8; i += 4) {
+                messageBits.push(imageData.data[i] & 1);
+            }
+            return bitsToMessage(messageBits);
+        }
+
+        function bitsToMessage(bits) {
+            const bytes = [];
+            for (let i = 0; i < bits.length; i += 8) {
+                const byte = bits.slice(i, i + 8).join('');
+                bytes.push(String.fromCharCode(parseInt(byte, 2)));
+            }
+            return bytes.join('');
+        }
+
+        messageInput.addEventListener('input', function() {
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            embedMessageInImage(imageData, messageInput.value);
+            ctx.putImageData(imageData, 0, 0);
+        });
+
+        downloadBtn.addEventListener('click', function() {
+            const link = document.createElement('a');
+            link.download = 'steganography-image.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        decryptBtn.addEventListener('click', function() {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const messageLength = 100;  // Set the expected length of the message here
+            const message = extractMessageFromImage(imageData, messageLength);
+            messageInput.value = message;
+            messageInput.classList.remove('hidden');
+            messageInput.classList.add('visible');
+        });
+    </script>
+</body>
+</html>

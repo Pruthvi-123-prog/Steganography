@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Steganography Webpage</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
@@ -13,26 +14,32 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
-            overflow: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
 
         .container {
             text-align: center;
+            width: 100%;
+            max-width: 500px;
+            padding: 0 15px;
         }
 
         .title {
-            font-size: 3rem;
+            font-size: clamp(2rem, 5vw, 3rem);
             margin-bottom: 20px;
             position: relative;
             text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
         }
 
         .typing-text {
-            font-size: 1.2rem;
+            font-size: clamp(1rem, 3vw, 1.2rem);
             margin-bottom: 30px;
-            height: 30px;
+            height: auto;
+            min-height: 30px;
             position: relative;
             white-space: nowrap;
             overflow: hidden;
@@ -47,18 +54,28 @@
             display: none;
         }
 
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
         .upload-label {
             display: inline-block;
-            width: 200px;
+            width: 100%;
+            max-width: 420px;
             height: 50px;
             background-color: #000;
             color: #fff;
-            font-size: 1.5rem;
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
             line-height: 50px;
             border-radius: 10px;
             cursor: pointer;
             transition: box-shadow 0.3s ease;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             border: 2px solid lightgray;
             box-shadow: 0 0 5px lightgray;
         }
@@ -69,13 +86,14 @@
 
         .action-btn {
             display: inline-block;
-            width: 200px;
+            width: 100%;
+            max-width: 420px;
             padding: 10px 20px;
-            margin: 10px 0;
+            margin: 5px 0;
             border: none;
             background-color: #000;
             color: #fff;
-            font-size: 1.5rem;
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
             border-radius: 10px;
             cursor: pointer;
             transition: box-shadow 0.3s ease;
@@ -97,24 +115,52 @@
         }
 
         .message-box {
-            width: 380px;
-            margin: 10px auto;
-            padding: 10px;
+            width: 100%;
+            max-width: 420px;
+            height: 120px;
+            margin: 25px auto;
+            padding: 15px;
             border-radius: 10px;
             border: 2px solid lightgray;
             box-shadow: 0 0 5px lightgray;
             background-color: #000;
             color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            box-sizing: border-box;
         }
 
         .hidden {
             display: none;
         }
 
-        @keyframes blink {
-            50% {
-                opacity: 0;
+        #download-btn {
+            margin-top: 25px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
             }
+
+            .container {
+                padding: 0 10px;
+            }
+
+            .message-box {
+                height: 100px;
+                margin: 15px auto;
+            }
+
+            .upload-label, .action-btn {
+                height: 45px;
+                line-height: 45px;
+            }
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
         }
 
         @keyframes slideDown {
@@ -134,7 +180,7 @@
         <h1 class="title">STEGANOGRAPHY</h1>
         <p class="typing-text"><span class="typed-text"></span><span class="cursor">|</span></p>
         <div class="button-container">
-            <input type="file" id="imageUploader" class="upload-btn">
+            <input type="file" id="imageUploader" class="upload-btn" accept="image/*">
             <label for="imageUploader" class="upload-label">Upload</label>
             <button id="encrypt-btn" class="action-btn hidden">Encrypt</button>
             <button id="decrypt-btn" class="action-btn hidden">Decrypt</button>
@@ -182,23 +228,31 @@
         const ctx = canvas.getContext('2d');
         let img = new Image();
 
-        imageUploader.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                img.src = e.target.result;
-                img.onload = function() {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                    encryptBtn.classList.remove('hidden');
-                    encryptBtn.classList.add('visible');
-                    decryptBtn.classList.remove('hidden');
-                    decryptBtn.classList.add('visible');
-                };
-            };
-            reader.readAsDataURL(file);
-        });
+imageUploader.addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (!file || !file.type.startsWith('image/')) {
+        alert('Please select a valid image file');
+        event.target.value = '';
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        img.src = e.target.result;
+        img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            encryptBtn.classList.remove('hidden');
+            encryptBtn.classList.add('visible');
+            decryptBtn.classList.remove('hidden');
+            decryptBtn.classList.add('visible');
+        };
+    };
+    reader.onerror = function() {
+        alert('Error reading the image file');
+    };
+    reader.readAsDataURL(file);
+});
 
         encryptBtn.addEventListener('click', function() {
             messageInput.classList.remove('hidden');
@@ -208,47 +262,34 @@
         });
 
         function embedMessageInImage(imageData, message) {
-            const messageBits = messageToBits(message);
-            let messageIndex = 0;
-            for (let i = 0; i < imageData.data.length; i += 4) {
-                if (messageIndex < messageBits.length) {
-                    imageData.data[i] = setLSB(imageData.data[i], messageBits[messageIndex]);
-                    messageIndex++;
-                }
+            const messageBinary = message.split('').map(char => 
+                char.charCodeAt(0).toString(2).padStart(8, '0')
+            ).join('') + '00000000';
+
+            let bitIndex = 0;
+            for (let i = 0; i < imageData.data.length && bitIndex < messageBinary.length; i += 4) {
+                imageData.data[i] = (imageData.data[i] & 254) | parseInt(messageBinary[bitIndex]);
+                bitIndex++;
             }
             return imageData;
         }
 
-        function messageToBits(message) {
-            const bits = [];
-            for (let i = 0; i < message.length; i++) {
-                const charBits = message.charCodeAt(i).toString(2).padStart(8, '0');
-                for (let j = 0; j < charBits.length; j++) {
-                    bits.push(parseInt(charBits[j]));
-                }
+        function extractMessageFromImage(imageData) {
+            let binaryMessage = '';
+            let bytes = [];
+            
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                binaryMessage += imageData.data[i] & 1;
             }
-            return bits;
-        }
-
-        function setLSB(value, bit) {
-            return (value & 0xFE) | bit;
-        }
-
-        function extractMessageFromImage(imageData, messageLength) {
-            const messageBits = [];
-            for (let i = 0; i < imageData.data.length && messageBits.length < messageLength * 8; i += 4) {
-                messageBits.push(imageData.data[i] & 1);
+            
+            for (let i = 0; i < binaryMessage.length; i += 8) {
+                let byte = binaryMessage.substr(i, 8);
+                let charCode = parseInt(byte, 2);
+                if (charCode === 0 || charCode > 127) break;
+                bytes.push(charCode);
             }
-            return bitsToMessage(messageBits);
-        }
-
-        function bitsToMessage(bits) {
-            const bytes = [];
-            for (let i = 0; i < bits.length; i += 8) {
-                const byte = bits.slice(i, i + 8).join('');
-                bytes.push(String.fromCharCode(parseInt(byte, 2)));
-            }
-            return bytes.join('');
+            
+            return String.fromCharCode(...bytes);
         }
 
         messageInput.addEventListener('input', function() {
@@ -267,8 +308,7 @@
 
         decryptBtn.addEventListener('click', function() {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const messageLength = 100;  // Set the expected length of the message here
-            const message = extractMessageFromImage(imageData, messageLength);
+            const message = extractMessageFromImage(imageData);
             messageInput.value = message;
             messageInput.classList.remove('hidden');
             messageInput.classList.add('visible');
